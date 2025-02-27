@@ -21,6 +21,7 @@ def read_args():
     parser.add_argument("--output_file", type=str, default="evaluation_results.json", help="File to save evaluation results")
     # NOTE: The dataset asks for CoT output. This is very token-consuming. If you limit it to a small number, the model will not be able to generate the answer.
     parser.add_argument("--max_tokens", type=int, default=1024, help="Maximum number of tokens to generate.")
+    parser.add_argument("--log_per_step", type=int, default=1000, help="Log results per step")
     return parser.parse_args()
 
 def generate_batch_completions(llm, prompts, sampling_params):
@@ -114,6 +115,11 @@ def main():
                     break
             if args.num_samples > 0 and num >= args.num_samples:
                 break
+            if num % args.log_per_step == 0:
+                with open(f"step{num}_" + args.output_file, "w", encoding="utf-8") as f:
+                    json.dump(results, f, ensure_ascii=False, indent=2)
+                with open(f"step{num}_complete" + args.output_file, "w", encoding="utf-8") as f:
+                    json.dump(complete_results, f, ensure_ascii=False, indent=2)
         if args.num_samples > 0 and num >= args.num_samples:
             break
     
