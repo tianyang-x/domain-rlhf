@@ -10,8 +10,7 @@ import argparse
 
 def read_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-7B-Instruct", help="The model to use for evaluation")
-    parser.add_argument("--tokenizer", type=str, default="Qwen/Qwen2.5-7B-Instruct", help="The tokenizer to use for evaluation")
+    parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-7B", help="The model to use for evaluation")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for evaluation")
     parser.add_argument("--k", type=int, default=5, help="Number of completions to generate for each prompt")
     parser.add_argument("--tensor_parallel_size", type=int, default=2, help="Number of parallel tensors to use for generation")
@@ -36,6 +35,21 @@ def generate_batch_completions(llm, prompts, sampling_params):
         all_completions.append(completions)
     return all_completions
 
+def process_dialogue(dialogue: dict, tokenizer, start_header_text, end_header_text, eot_text):
+    prompt_template = ""
+    if tokenizer.bos_token_id is not None:
+        prompt_template += f"{tokenizer.decode([tokenizer.bos_token_id])}"
+
+    prompts = dialogue
+    if prompts[-1]["role"] == "assistant":
+        prompts = prompts[:-1]
+    for message in prompts:
+        prompt_template += f"{start_header_text}{message['role']}{end_header_text}\n{message['content']}{eot_text}\n"
+    # append bot token
+    prompt_template += f"{start_header_text}assistant{end_header_text}\n"
+
+    return prompt_template
+
 def evaluate(k_completions, ability, ground_truth):
     all_results = []
     for completion in k_completions:
@@ -53,7 +67,7 @@ def main():
     
     llm = LLM(model=args.model, tensor_parallel_size=args.tensor_parallel_size)
     sampling_params = SamplingParams(temperature=args.temperature, top_p=args.top_p, n=args.k, max_tokens=args.max_tokens)
-    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
     
     for split in ["train", "validation"]:
         print(f"Running evaluation on {split} split")
@@ -91,11 +105,7 @@ def main():
             batch_samples = split_ds[i: i + args.batch_size]
             prompts = []
             for sample in batch_samples['prompt']:
-                message = tokenizer.apply_chat_template(
-                    sample,
-                    tokenize=False,
-                    add_generation_prompt=False
-                )
+                message = process_dialogue(sample, tokenizer, start_header_text="<|start_header_id|>", end_header_text="<|end_header_id|>", eot_text="<|eot_id|>")
                 prompts.append(message)
             
             batch_outputs = generate_batch_completions(llm, prompts, sampling_params)
