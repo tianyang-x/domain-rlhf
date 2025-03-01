@@ -11,19 +11,20 @@ import argparse
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-7B-Instruct", help="The model to use for evaluation")
+    parser.add_argument("--tokenizer", type=str, default="Qwen/Qwen2.5-7B-Instruct", help="The tokenizer to use for evaluation")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for evaluation")
     parser.add_argument("--k", type=int, default=5, help="Number of completions to generate for each prompt")
     parser.add_argument("--tensor_parallel_size", type=int, default=2, help="Number of parallel tensors to use for generation")
     parser.add_argument("--temperature", type=float, default=0.8, help="Temperature for sampling")
     parser.add_argument("--top_p", type=float, default=0.95, help="Top-p for sampling")
-    parser.add_argument("--num_samples", type=int, default=-1, help="Number of samples to evaluate; if -1, use the entire shard")
+    parser.add_argument("--num_samples", type=int, default=100, help="Number of samples to evaluate; if -1, use the entire shard")
     parser.add_argument("--output_file", type=str, default="evaluation_results.json", help="Base file name to save evaluation results")
     # NOTE: token consuming
     parser.add_argument("--max_tokens", type=int, default=4096, help="Maximum number of tokens to generate.")
     parser.add_argument("--log_per_step", type=int, default=1000, help="Log results every N samples")
     # NOTE: new features: resuming, shard splitting
     parser.add_argument("--resume", action="store_true", help="Resume evaluation from existing output files if available")
-    parser.add_argument("--num_shards", type=int, default=1, help="Total number of shards to split the dataset")
+    parser.add_argument("--num_shards", type=int, default=3, help="Total number of shards to split the dataset")
     parser.add_argument("--shard_index", type=int, default=0, help="Index of the shard to process (0-indexed)")
     return parser.parse_args()
 
@@ -52,7 +53,7 @@ def main():
     
     llm = LLM(model=args.model, tensor_parallel_size=args.tensor_parallel_size)
     sampling_params = SamplingParams(temperature=args.temperature, top_p=args.top_p, n=args.k, max_tokens=args.max_tokens)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     
     for split in ["train", "validation"]:
         print(f"Running evaluation on {split} split")
@@ -60,7 +61,7 @@ def main():
         total_samples = len(dataset_full)
         shard_start = (args.shard_index * total_samples) // args.num_shards
         shard_end = ((args.shard_index + 1) * total_samples) // args.num_shards
-        split_ds = dataset_full[shard_start:shard_end]
+        split_ds = dataset_full.select(range(shard_start, shard_end))
         
         if args.num_samples > 0:
             num_samples = min(args.num_samples, len(split_ds))
