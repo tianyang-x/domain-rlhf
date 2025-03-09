@@ -90,3 +90,4 @@ complete*.json
 
 dataset/*
 outputs/*
+wandb
