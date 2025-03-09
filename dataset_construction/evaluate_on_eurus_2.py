@@ -4,20 +4,20 @@ from datasets import load_dataset
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
 from transformers import AutoTokenizer
-from evaluation_utils.code_util import evaluate_code
-from evaluation_utils.math_util import evaluate_math
+from util.evaluation_utils.code_util import evaluate_code
+from util.evaluation_utils.math_util import evaluate_math
 import argparse
 
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="Qwen/Qwen2.5-7B", help="The model to use for evaluation")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for evaluation")
-    parser.add_argument("--k", type=int, default=5, help="Number of completions to generate for each prompt")
-    parser.add_argument("--tensor_parallel_size", type=int, default=2, help="Number of parallel tensors to use for generation")
-    parser.add_argument("--temperature", type=float, default=0.8, help="Temperature for sampling")
-    parser.add_argument("--top_p", type=float, default=0.95, help="Top-p for sampling")
-    parser.add_argument("--num_samples", type=int, default=100, help="Number of samples to evaluate; if -1, use the entire shard")
-    parser.add_argument("--output_file", type=str, default="evaluation_results.json", help="Base file name to save evaluation results")
+    parser.add_argument("--k", type=int, default=8, help="Number of completions to generate for each prompt")
+    parser.add_argument("--tensor_parallel_size", type=int, default=1, help="Number of parallel tensors to use for generation")
+    parser.add_argument("--temperature", type=float, default=1.0, help="Temperature for sampling")
+    parser.add_argument("--top_p", type=float, default=1.0, help="Top-p for sampling")
+    parser.add_argument("--num_samples", type=int, default=-1, help="Number of samples to evaluate; if -1, use the entire shard")
+    parser.add_argument("--output_folder", type=str, default=".", help="Base folder to save evaluation results")
     # NOTE: token consuming
     parser.add_argument("--max_tokens", type=int, default=4096, help="Maximum number of tokens to generate.")
     parser.add_argument("--log_per_step", type=int, default=1000, help="Log results every N samples")
@@ -83,7 +83,9 @@ def main():
             num_samples = len(split_ds)
         
         result_file = f"evaluation_results_{split}_shard{args.shard_index}_of_{args.num_shards}.json"
+        result_file = os.path.join(args.output_folder, result_file)
         complete_result_file = f"complete_evaluation_results_{split}_shard{args.shard_index}_of_{args.num_shards}.json"
+        complete_result_file = os.path.join(args.output_folder, complete_result_file)
         
         if args.resume and os.path.exists(result_file):
             with open(result_file, "r", encoding="utf-8") as f:

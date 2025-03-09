@@ -87,3 +87,6 @@ __pycache__
 *results.json
 evaluation*.json
 complete*.json
+
+dataset/*
+outputs/*

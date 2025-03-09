@@ -1,0 +1,215 @@
+_wandb:
+    value:
+        cli_version: 0.19.8
+        m: []
+        python_version: 3.10.16
+        t:
+            "1":
+                - 1
+                - 11
+                - 30
+                - 41
+                - 49
+                - 51
+                - 55
+                - 71
+                - 95
+                - 105
+            "2":
+                - 1
+                - 11
+                - 30
+                - 41
+                - 49
+                - 51
+                - 55
+                - 71
+                - 95
+                - 105
+            "3":
+                - 2
+                - 13
+                - 16
+                - 23
+                - 55
+            "4": 3.10.16
+            "5": 0.19.8
+            "6": 4.49.0
+            "8":
+                - 5
+            "12": 0.19.8
+            "13": linux-x86_64
+actor_rollout_ref:
+    value:
+        actor:
+            clip_ratio: 0.2
+            entropy_coeff: 0.001
+            fsdp_config:
+                fsdp_size: -1
+                optimizer_offload: false
+                param_offload: false
+                wrap_policy:
+                    min_num_params: 0
+            grad_clip: 1
+            kl_loss_coef: 0.001
+            kl_loss_type: low_var_kl
+            optim:
+                lr: 1e-06
+                lr_warmup_steps_ratio: 0
+                min_lr_ratio: null
+                total_training_steps: 120134
+                warmup_style: constant
+            ppo_epochs: 1
+            ppo_max_token_len_per_gpu: 16384
+            ppo_micro_batch_size: null
+            ppo_micro_batch_size_per_gpu: 1
+            ppo_mini_batch_size: 4
+            shuffle: false
+            strategy: fsdp
+            ulysses_sequence_parallel_size: 1
+            use_dynamic_bsz: false
+            use_kl_loss: false
+        hybrid_engine: true
+        model:
+            enable_gradient_checkpointing: true
+            external_lib: null
+            path: Qwen/Qwen2-7B-Instruct
+            use_remove_padding: true
+        ref:
+            fsdp_config:
+                param_offload: true
+                wrap_policy:
+                    min_num_params: 0
+            log_prob_max_token_len_per_gpu: 16384
+            log_prob_micro_batch_size: null
+            log_prob_micro_batch_size_per_gpu: 1
+            log_prob_use_dynamic_bsz: false
+            ulysses_sequence_parallel_size: 1
+        rollout:
+            disable_log_stats: true
+            do_sample: true
+            dtype: bfloat16
+            enable_chunked_prefill: true
+            enforce_eager: true
+            free_cache_engine: true
+            gpu_memory_utilization: 0.6
+            ignore_eos: false
+            load_format: dummy_dtensor
+            log_prob_max_token_len_per_gpu: 16384
+            log_prob_micro_batch_size: null
+            log_prob_micro_batch_size_per_gpu: 1
+            log_prob_use_dynamic_bsz: false
+            max_model_len: null
+            max_num_batched_tokens: 8192
+            max_num_seqs: 1024
+            "n": 1
+            name: vllm
+            prompt_length: 2048
+            response_length: 1024
+            temperature: 1
+            tensor_model_parallel_size: 2
+            top_k: -1
+            top_p: 1
+            use_fire_sampling: false
+algorithm:
+    value:
+        adv_estimator: gae
+        gamma: 1
+        kl_ctrl:
+            kl_coef: 0.001
+            type: fixed
+        kl_penalty: kl
+        lam: 1
+critic:
+    value:
+        cliprange_value: 0.5
+        forward_max_token_len_per_gpu: 32768
+        forward_micro_batch_size: null
+        forward_micro_batch_size_per_gpu: 1
+        grad_clip: 1
+        model:
+            enable_gradient_checkpointing: true
+            external_lib: null
+            fsdp_config:
+                fsdp_size: -1
+                optimizer_offload: false
+                param_offload: false
+                wrap_policy:
+                    min_num_params: 0
+            path: Qwen/Qwen2-7B-Instruct
+            tokenizer_path: Qwen/Qwen2-7B-Instruct
+            use_remove_padding: true
+        optim:
+            lr: 1e-05
+            lr_warmup_steps_ratio: 0
+            min_lr_ratio: null
+            total_training_steps: 120134
+            warmup_style: constant
+        ppo_epochs: 1
+        ppo_max_token_len_per_gpu: 32768
+        ppo_micro_batch_size: null
+        ppo_micro_batch_size_per_gpu: 1
+        ppo_mini_batch_size: 4
+        shuffle: false
+        strategy: fsdp
+        ulysses_sequence_parallel_size: 1
+        use_dynamic_bsz: false
+data:
+    value:
+        filter_overlong_prompts: false
+        image_key: images
+        max_prompt_length: 2048
+        max_response_length: 1024
+        prompt_key: prompt
+        return_raw_chat: false
+        return_raw_input_ids: false
+        shuffle: true
+        tokenizer: null
+        train_batch_size: 4
+        train_files:
+            - ./dataset/eurus_data/train.parquet
+        truncation: error
+        val_batch_size: null
+        val_files:
+            - ./dataset/eurus_data/test.parquet
+reward_model:
+    value:
+        enable: false
+        forward_max_token_len_per_gpu: 32768
+        max_length: null
+        micro_batch_size: null
+        micro_batch_size_per_gpu: null
+        model:
+            external_lib: null
+            fsdp_config:
+                fsdp_size: -1
+                min_num_params: 0
+                param_offload: false
+            input_tokenizer: Qwen/Qwen2-7B-Instruct
+            path: ~/models/FsfairX-LLaMA3-RM-v0.1
+            use_remove_padding: false
+        reward_manager: eurus
+        strategy: fsdp
+        ulysses_sequence_parallel_size: 1
+        use_dynamic_bsz: false
+trainer:
+    value:
+        critic_warmup: 0
+        default_hdfs_dir: null
+        default_local_dir: checkpoints/verl_example/Qwen2-7B-Instruct_function_rm
+        del_local_ckpt_after_load: false
+        experiment_name: Qwen2-7B-Instruct_function_rm
+        logger:
+            - console
+            - wandb
+        n_gpus_per_node: 4
+        nnodes: 1
+        project_name: verl_example
+        remove_previous_ckpt_in_save: false
+        resume_from_path: false
+        resume_mode: auto
+        save_freq: -1
+        test_freq: 10
+        total_epochs: 1
+        total_training_steps: null
+        val_generations_to_log_to_wandb: 0
